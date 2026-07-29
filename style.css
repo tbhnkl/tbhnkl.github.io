@@ -1,0 +1,138 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b3d1e;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+#game-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#field {
+  display: block;
+  background: #1f8a3b;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+#hud {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  pointer-events: none;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+}
+
+#hud .score {
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 800;
+  min-width: 1.4em;
+  text-align: center;
+}
+
+#hud .timer {
+  font-size: clamp(16px, 3.5vw, 22px);
+  font-weight: 600;
+  background: rgba(0,0,0,0.35);
+  padding: 4px 12px;
+  border-radius: 10px;
+}
+
+#message {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: clamp(24px, 7vw, 48px);
+  font-weight: 900;
+  text-align: center;
+  text-shadow: 0 3px 8px rgba(0,0,0,0.7);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#message.hidden {
+  opacity: 0;
+}
+
+#controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 18px;
+  pointer-events: none;
+}
+
+#moveButtons, #actionButtons {
+  display: flex;
+  gap: 14px;
+  pointer-events: auto;
+}
+
+.ctrl-btn {
+  width: clamp(56px, 15vw, 76px);
+  height: clamp(56px, 15vw, 76px);
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: clamp(22px, 6vw, 30px);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+}
+
+.ctrl-btn:active,
+.ctrl-btn.pressed {
+  background: rgba(255,255,255,0.5);
+  transform: scale(0.94);
+}
+
+.ctrl-btn.action {
+  background: rgba(255, 205, 0, 0.85);
+  color: #1a1a1a;
+}
+
+.ctrl-btn.kick {
+  background: rgba(255, 70, 70, 0.9);
+  color: #fff;
+}
+
+@media (orientation: portrait) {
+  #message {
+    top: 30%;
+  }
+}

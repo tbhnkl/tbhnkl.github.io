@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="he" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>1v1 Soccer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-wrap">
+    <canvas id="field"></canvas>
+
+    <div id="hud">
+      <div class="score" id="scoreYou">0</div>
+      <div class="timer" id="timer">1:00</div>
+      <div class="score" id="scoreCpu">0</div>
+    </div>
+
+    <div id="message" class="hidden"></div>
+
+    <div id="controls">
+      <div id="moveButtons">
+        <button id="btnLeft" class="ctrl-btn" aria-label="Back">◀</button>
+        <button id="btnRight" class="ctrl-btn" aria-label="Forward">▶</button>
+      </div>
+      <div id="actionButtons">
+        <button id="btnJump" class="ctrl-btn action" aria-label="Jump">⤒</button>
+        <button id="btnKick" class="ctrl-btn action kick" aria-label="Kick">⚽</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
