@@ -10,6 +10,7 @@
   --primary-container: #d7e6ff;
   --secondary: #FFB300;
   --danger: #c0392b;
+  --bar-muted: #7c8bae;
   --border: #e1e5ee;
   --shadow: 0 8px 24px rgba(20, 24, 31, 0.08);
   --safe-top: env(safe-area-inset-top, 0px);
@@ -28,6 +29,7 @@
     --primary-container: #1c3a63;
     --secondary: #ffcc66;
     --danger: #ff6b5e;
+    --bar-muted: #5b6b85;
     --border: #2a313d;
     --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
@@ -265,38 +267,71 @@ button, input {
   margin: 0;
 }
 
-.results-table {
-  width: 100%;
-  border-collapse: collapse;
+.results-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   background: var(--surface);
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 16px;
+  padding: 18px 16px;
   box-shadow: var(--shadow);
 }
 
-.results-table th, .results-table td {
-  padding: 12px 10px;
-  text-align: start;
-  border-bottom: 1px solid var(--border);
+.chart-row-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
-.results-table th {
-  color: var(--text-muted);
-  font-size: 0.85rem;
+.chart-rank {
+  font-size: 1.2rem;
+  margin-inline-end: 6px;
+}
+
+.chart-name {
   font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
 }
 
-.results-table td.align-end, .results-table th.align-end {
-  text-align: end;
-}
-
-.results-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.results-table tbody tr.winner-row td {
-  background: var(--primary-container);
+.chart-row.is-winner .chart-name {
   font-weight: 800;
+}
+
+.chart-value {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--text);
+  direction: ltr;
+  white-space: nowrap;
+}
+
+.chart-bar-track {
+  width: 100%;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.chart-bar-fill {
+  height: 100%;
+  border-radius: 13px;
+  background: var(--bar-muted);
+  width: 0%;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.chart-row.is-winner .chart-bar-fill {
+  background: var(--secondary);
+}
+
+.chart-row.no-score .chart-name,
+.chart-row.no-score .chart-value {
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .banner {

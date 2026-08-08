@@ -25,8 +25,5 @@
     <string name="results_title">תוצאות סופיות</string>
     <string name="results_winner">🏆 %1$s ניצח/ה עם %2$d הרץ!</string>
     <string name="results_no_scores">אף אחד לא הצליח להפיק צליל ברור</string>
-    <string name="results_table_place">מקום</string>
-    <string name="results_table_name">שם</string>
-    <string name="results_table_frequency">תדר (הרץ)</string>
     <string name="results_restart_button">תחרות חדשה</string>
 </resources>

@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icon.svg" />
-  <link rel="stylesheet" href="assets/style.css?v=2" />
+  <link rel="stylesheet" href="assets/style.css?v=3" />
 </head>
 <body>
   <div id="app" class="app">
@@ -73,22 +73,13 @@
       <h1 class="title">תוצאות סופיות</h1>
       <p id="results-winner" class="winner-banner"></p>
 
-      <table class="results-table">
-        <thead>
-          <tr>
-            <th>מקום</th>
-            <th>שם</th>
-            <th class="align-end">תדר (הרץ)</th>
-          </tr>
-        </thead>
-        <tbody id="results-body"></tbody>
-      </table>
+      <div id="results-chart" class="results-chart"></div>
 
       <button id="btn-restart" class="btn btn-primary" type="button">תחרות חדשה</button>
     </section>
 
   </div>
 
-  <script src="assets/app.js?v=2"></script>
+  <script src="assets/app.js?v=3"></script>
 </body>
 </html>

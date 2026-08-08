@@ -200,7 +200,7 @@ const el = {
 
   screenResults: document.getElementById('screen-results'),
   resultsWinner: document.getElementById('results-winner'),
-  resultsBody: document.getElementById('results-body'),
+  resultsChart: document.getElementById('results-chart'),
   btnRestart: document.getElementById('btn-restart')
 };
 
@@ -325,31 +325,68 @@ function restart() {
 
 /* ---------- Results ---------- */
 
+const RANK_MEDALS = ['🥇', '🥈', '🥉'];
+
 function renderResults() {
   const ranked = [...state.players].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
   const winner = ranked.find((p) => p.score !== null) || null;
+  const maxScore = winner ? winner.score : null;
 
   el.resultsWinner.textContent = winner
     ? `🏆 ${winner.name} ניצח/ה עם ${Math.round(winner.score)} הרץ!`
     : 'אף אחד לא הצליח להפיק צליל ברור';
 
-  el.resultsBody.innerHTML = '';
+  el.resultsChart.innerHTML = '';
+  const fillsToAnimate = [];
+
   ranked.forEach((player, index) => {
-    const row = document.createElement('tr');
-    if (winner && player.id === winner.id) row.classList.add('winner-row');
+    const isWinner = Boolean(winner && player.id === winner.id);
+    const hasScore = player.score !== null;
 
-    const place = document.createElement('td');
-    place.textContent = String(index + 1);
+    const row = document.createElement('div');
+    row.className = 'chart-row';
+    if (isWinner) row.classList.add('is-winner');
+    if (!hasScore) row.classList.add('no-score');
 
-    const name = document.createElement('td');
-    name.textContent = player.name;
+    const header = document.createElement('div');
+    header.className = 'chart-row-header';
 
-    const freq = document.createElement('td');
-    freq.className = 'align-end';
-    freq.textContent = player.score !== null ? String(Math.round(player.score)) : '—';
+    const nameWrap = document.createElement('span');
+    const rankLabel = document.createElement('span');
+    rankLabel.className = 'chart-rank';
+    rankLabel.textContent = hasScore && index < 3 ? RANK_MEDALS[index] : `${index + 1}.`;
+    const nameLabel = document.createElement('span');
+    nameLabel.className = 'chart-name';
+    nameLabel.textContent = player.name;
+    nameWrap.append(rankLabel, nameLabel);
 
-    row.append(place, name, freq);
-    el.resultsBody.appendChild(row);
+    const valueLabel = document.createElement('span');
+    valueLabel.className = 'chart-value';
+    valueLabel.textContent = hasScore ? `${Math.round(player.score)} הרץ` : '—';
+
+    header.append(nameWrap, valueLabel);
+
+    const track = document.createElement('div');
+    track.className = 'chart-bar-track';
+    const fill = document.createElement('div');
+    fill.className = 'chart-bar-fill';
+    track.appendChild(fill);
+
+    row.append(header, track);
+    el.resultsChart.appendChild(row);
+
+    const targetPercent = hasScore && maxScore ? Math.max(4, (player.score / maxScore) * 100) : 0;
+    fillsToAnimate.push([fill, targetPercent]);
+  });
+
+  // Bars start at width:0 (see CSS) and grow to their target on the next
+  // frame, so the reveal animates instead of popping in at full length.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      fillsToAnimate.forEach(([fill, percent]) => {
+        fill.style.width = `${percent}%`;
+      });
+    });
   });
 }
 
