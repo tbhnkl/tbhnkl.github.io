@@ -50,26 +50,29 @@ function detectFrequency(samples, sampleRate) {
     corrs[lag - minLag] = corr;
   }
 
-  let bestIndex = 0;
-  for (let i = 1; i < corrs.length; i++) {
-    if (corrs[i] > corrs[bestIndex]) bestIndex = i;
+  // Raw autocorrelation is always highest at the very shortest lag we scan (any
+  // real signal, periodic or not, is highly self-similar over a tiny time offset)
+  // so picking the overall max would just return minLag/MAX_FREQUENCY_HZ on every
+  // frame. Require a genuine interior local maximum instead - a real periodic tone
+  // actually produces a bump in the correlation curve, noise/silence does not.
+  let bestIndex = -1;
+  for (let i = 1; i < corrs.length - 1; i++) {
+    if (corrs[i] >= corrs[i - 1] && corrs[i] >= corrs[i + 1]) {
+      if (bestIndex === -1 || corrs[i] > corrs[bestIndex]) bestIndex = i;
+    }
   }
+  if (bestIndex === -1) return null;
 
   const bestCorr = corrs[bestIndex];
   const normalized = bestCorr / energy;
   if (normalized < CONFIDENCE_THRESHOLD) return null;
 
-  let refinedLag;
-  if (bestIndex > 0 && bestIndex < corrs.length - 1) {
-    const y0 = corrs[bestIndex - 1];
-    const y1 = corrs[bestIndex];
-    const y2 = corrs[bestIndex + 1];
-    const denom = y0 - 2 * y1 + y2;
-    const offset = denom !== 0 ? clamp(0.5 * (y0 - y2) / denom, -1, 1) : 0;
-    refinedLag = (minLag + bestIndex) + offset;
-  } else {
-    refinedLag = minLag + bestIndex;
-  }
+  const y0 = corrs[bestIndex - 1];
+  const y1 = corrs[bestIndex];
+  const y2 = corrs[bestIndex + 1];
+  const denom = y0 - 2 * y1 + y2;
+  const offset = denom !== 0 ? clamp(0.5 * (y0 - y2) / denom, -1, 1) : 0;
+  const refinedLag = (minLag + bestIndex) + offset;
 
   if (refinedLag <= 0) return null;
   return sampleRate / refinedLag;

@@ -46,26 +46,31 @@ object PitchDetector {
             corrs[lag - minLag] = corr
         }
 
-        var bestIndex = 0
-        for (i in corrs.indices) {
-            if (corrs[i] > corrs[bestIndex]) bestIndex = i
+        // Raw autocorrelation is always highest at the very shortest lag we scan
+        // (any real signal, periodic or not, is highly self-similar over a tiny time
+        // offset) so picking the overall max would just return minLag/MAX_FREQUENCY_HZ
+        // on every frame. Require a genuine interior local maximum instead - a real
+        // periodic tone actually produces a bump in the correlation curve, noise/silence
+        // does not.
+        var bestIndex = -1
+        for (i in 1 until corrs.size - 1) {
+            if (corrs[i] >= corrs[i - 1] && corrs[i] >= corrs[i + 1]) {
+                if (bestIndex == -1 || corrs[i] > corrs[bestIndex]) bestIndex = i
+            }
         }
+        if (bestIndex == -1) return null
 
         val bestCorr = corrs[bestIndex]
         val normalized = bestCorr / energy
         if (normalized < CONFIDENCE_THRESHOLD) return null
 
         // Parabolic interpolation around the peak for sub-sample lag accuracy.
-        val refinedLag = if (bestIndex > 0 && bestIndex < corrs.size - 1) {
-            val y0 = corrs[bestIndex - 1]
-            val y1 = corrs[bestIndex]
-            val y2 = corrs[bestIndex + 1]
-            val denom = y0 - 2 * y1 + y2
-            val offset = if (denom != 0.0) 0.5 * (y0 - y2) / denom else 0.0
-            (minLag + bestIndex) + offset.coerceIn(-1.0, 1.0)
-        } else {
-            (minLag + bestIndex).toDouble()
-        }
+        val y0 = corrs[bestIndex - 1]
+        val y1 = corrs[bestIndex]
+        val y2 = corrs[bestIndex + 1]
+        val denom = y0 - 2 * y1 + y2
+        val offset = if (denom != 0.0) 0.5 * (y0 - y2) / denom else 0.0
+        val refinedLag = (minLag + bestIndex) + offset.coerceIn(-1.0, 1.0)
 
         if (refinedLag <= 0) return null
         return (sampleRate / refinedLag).toFloat()
