@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">תחרות צפצופים</string>
+
+    <string name="setup_title">תחרות צפצופים</string>
+    <string name="setup_subtitle">מי מצפצף הכי גבוה?</string>
+    <string name="setup_player_count_label">כמות שחקנים</string>
+    <string name="setup_player_name_hint">שם שחקן %1$d</string>
+    <string name="setup_start_button">התחל תחרות</string>
+    <string name="setup_mic_permission_denied">האפליקציה צריכה גישה למיקרופון כדי לזהות את גובה הצפצוף</string>
+
+    <string name="turn_title">תור של %1$s</string>
+    <string name="turn_instructions">לחצו על הכפתור והתחילו לצפצף בקול הכי גבוה שאתם יכולים</string>
+    <string name="turn_start_button">התחילו לצפצף</string>
+    <string name="turn_recording_label">מקליט… צפצפו עכשיו!</string>
+    <string name="turn_live_frequency">%1$d הרץ</string>
+    <string name="turn_no_signal">…</string>
+    <string name="turn_result_label">התוצאה של %1$s</string>
+    <string name="turn_result_frequency">%1$d הרץ</string>
+    <string name="turn_result_no_whistle">לא זוהה צפצוף, נסו שוב</string>
+    <string name="turn_retry_button">נסה שוב</string>
+    <string name="turn_next_button">לשחקן הבא</string>
+    <string name="turn_finish_button">לתוצאות הסופיות</string>
+
+    <string name="results_title">תוצאות סופיות</string>
+    <string name="results_winner">🏆 %1$s ניצח/ה עם %2$d הרץ!</string>
+    <string name="results_no_scores">אף אחד לא הצליח להפיק צליל ברור</string>
+    <string name="results_table_place">מקום</string>
+    <string name="results_table_name">שם</string>
+    <string name="results_table_frequency">תדר (הרץ)</string>
+    <string name="results_restart_button">תחרות חדשה</string>
+</resources>
