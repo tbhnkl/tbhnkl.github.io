@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>תחרות צפצופים</title>
+  <meta name="description" content="תחרות צפצופים - מי מצפצף הכי גבוה?" />
+  <meta name="theme-color" content="#1A73E8" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <div id="app" class="app">
+
+    <div id="banner" class="banner" hidden role="alert"></div>
+
+    <!-- SETUP -->
+    <section id="screen-setup" class="screen">
+      <h1 class="title">תחרות צפצופים</h1>
+      <p class="subtitle">מי מצפצף הכי גבוה?</p>
+
+      <h2 class="section-label">כמות שחקנים</h2>
+      <div class="stepper">
+        <button id="btn-count-minus" class="icon-btn" type="button" aria-label="פחות שחקנים">－</button>
+        <span id="player-count-value" class="stepper-value">2</span>
+        <button id="btn-count-plus" class="icon-btn" type="button" aria-label="עוד שחקנים">＋</button>
+      </div>
+
+      <div id="player-names" class="player-names"></div>
+
+      <button id="btn-start-competition" class="btn btn-primary" type="button">התחל תחרות</button>
+    </section>
+
+    <!-- TURN -->
+    <section id="screen-turn" class="screen" hidden>
+      <h1 id="turn-title" class="title"></h1>
+
+      <div id="turn-idle" class="turn-state">
+        <p class="subtitle">לחצו על הכפתור והתחילו לצפצף בקול הכי גבוה שאתם יכולים</p>
+      </div>
+
+      <div id="turn-recording" class="turn-state" hidden>
+        <div class="pitch-ring">
+          <svg viewBox="0 0 120 120" class="pitch-ring-svg" aria-hidden="true">
+            <circle cx="60" cy="60" r="52" class="pitch-ring-track"></circle>
+            <circle id="pitch-ring-progress" cx="60" cy="60" r="52" class="pitch-ring-progress"></circle>
+          </svg>
+          <span id="live-frequency" class="pitch-ring-label">…</span>
+        </div>
+        <p class="subtitle">מקליט… צפצפו עכשיו!</p>
+      </div>
+
+      <div id="turn-result" class="turn-state" hidden>
+        <p id="turn-result-label" class="section-label"></p>
+        <p id="turn-result-value" class="result-value"></p>
+      </div>
+
+      <button id="btn-start-recording" class="btn btn-primary" type="button">התחילו לצפצף</button>
+
+      <div id="turn-result-actions" class="result-actions" hidden>
+        <button id="btn-retry" class="btn btn-outline" type="button">נסה שוב</button>
+        <button id="btn-next-player" class="btn btn-primary" type="button"></button>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="screen-results" class="screen" hidden>
+      <h1 class="title">תוצאות סופיות</h1>
+      <p id="results-winner" class="winner-banner"></p>
+
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>מקום</th>
+            <th>שם</th>
+            <th class="align-end">תדר (הרץ)</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+
+      <button id="btn-restart" class="btn btn-primary" type="button">תחרות חדשה</button>
+    </section>
+
+  </div>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "תחרות צפצופים",
+  "short_name": "צפצופים",
+  "description": "תחרות צפצופים לפי גובה התדר",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1117",
+  "theme_color": "#1A73E8",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
