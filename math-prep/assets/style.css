@@ -174,7 +174,13 @@ html, body {
   padding: 10px;
   touch-action: pan-x pan-y;
 }
-#pdf-canvas { max-width: none; display: block; background: #fff; border-radius: 6px; }
+.pdf-canvas-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.pdf-region-canvas { max-width: none; display: block; background: #fff; border-radius: 6px; }
 .pdf-loading {
   position: absolute;
   inset: 0;
@@ -229,17 +235,6 @@ html, body {
   list-style: none;
 }
 .panel summary::-webkit-details-marker { display: none; }
-
-.badge-btn {
-  border: none;
-  background: var(--surface-alt);
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 5px 9px;
-  border-radius: 999px;
-  cursor: pointer;
-}
 
 .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 

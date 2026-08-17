@@ -9,6 +9,21 @@ const DEFAULT_TOPICS = [
 
 const LAST_DOC_KEY = 'mathPrep.lastDocId';
 
+// Matches a question heading line like "Problem 3. (Open and Closed Sets)" or "שאלה 2"
+const HEADING_RE = /^\s*(?:Problem|Exercise|Question|שאלה|תרגיל)\s*\.?\s*(\d+)\.?\s*(?:\(([^)]+)\))?/i;
+
+// Best-effort topic suggestions from a question's heading text. Always editable afterwards.
+const TOPIC_KEYWORDS = [
+  { match: /lipschitz|continuit|continuous|open and closed|preimage/i, topic: 'גבולות ורציפות' },
+  { match: /convex|epigraph|sub-?gradient|unit ball|\bnorm\b|hyperplane/i, topic: 'קמירות' },
+  { match: /derivative|differentiab|taylor|jacobian|negligible/i, topic: 'נגזרות' },
+  { match: /linear programming|simplex method|\blp\b/i, topic: 'תכנון לינארי' },
+  { match: /matrix|matrices|eigen|determinant/i, topic: 'מטריצות ואלגברה לינארית' },
+  { match: /\bintegral|integration/i, topic: 'אינטגרלים' },
+  { match: /\bseries\b|\bsequence\b/i, topic: 'טורים' },
+  { match: /probability|random variable|expectation|variance/i, topic: 'הסתברות וסטטיסטיקה' },
+];
+
 // ---------- IndexedDB ----------
 
 function openDb() {
@@ -122,9 +137,10 @@ const els = {
   cardsContent: document.getElementById('cards-content'),
   cardPosition: document.getElementById('card-position'),
   btnClearTopicFilter: document.getElementById('btn-clear-topic-filter'),
+  btnAutoSplit: document.getElementById('btn-auto-split'),
   inputManifest: document.getElementById('input-manifest'),
   pdfScroll: document.getElementById('pdf-scroll'),
-  pdfCanvas: document.getElementById('pdf-canvas'),
+  pdfCanvasStack: document.getElementById('pdf-canvas-stack'),
   pdfLoading: document.getElementById('pdf-loading'),
   btnZoomIn: document.getElementById('btn-zoom-in'),
   btnZoomOut: document.getElementById('btn-zoom-out'),
@@ -135,7 +151,6 @@ const els = {
   cardTopicChips: document.getElementById('card-topic-chips'),
   formAddTopicInline: document.getElementById('form-add-topic-inline'),
   inputNewTopicInline: document.getElementById('input-new-topic-inline'),
-  btnAutoSplitInfo: document.getElementById('btn-auto-split-info'),
   stepsList: document.getElementById('steps-list'),
   formAddStep: document.getElementById('form-add-step'),
   inputNewStep: document.getElementById('input-new-step'),
@@ -206,6 +221,7 @@ async function getCardOrDefault(docId, cardId, defaults) {
     key, docId, cardId,
     page: defaults.page,
     crop: defaults.crop || null,
+    regions: defaults.regions || null,
     label: defaults.label || null,
     status: null,
     topics: [],
@@ -227,12 +243,17 @@ async function getDoc(docId) {
 function docCardList(doc) {
   if (doc.manifest && Array.isArray(doc.manifest.questions) && doc.manifest.questions.length) {
     return doc.manifest.questions.map((q) => ({
-      docId: doc.id, cardId: String(q.id), page: q.page, crop: q.crop || null, label: q.label || null,
+      docId: doc.id,
+      cardId: String(q.id),
+      page: q.regions ? q.regions[0].page : q.page,
+      crop: q.regions ? null : (q.crop || null),
+      regions: q.regions || null,
+      label: q.label || null,
     }));
   }
   const list = [];
   for (let p = 1; p <= doc.pageCount; p++) {
-    list.push({ docId: doc.id, cardId: String(p), page: p, crop: null, label: null });
+    list.push({ docId: doc.id, cardId: String(p), page: p, crop: null, regions: null, label: null });
   }
   return list;
 }
@@ -353,44 +374,54 @@ async function getPdf(docId) {
   return pdf;
 }
 
+async function renderPageRegion(pdf, region, containerWidth, dpr) {
+  const page = await pdf.getPage(region.page);
+  const base = page.getViewport({ scale: 1 });
+  const fitScale = containerWidth / base.width;
+  const renderScale = fitScale * state.zoom * dpr;
+  const viewport = page.getViewport({ scale: renderScale });
+
+  const off = document.createElement('canvas');
+  off.width = Math.round(viewport.width);
+  off.height = Math.round(viewport.height);
+  await page.render({ canvasContext: off.getContext('2d'), viewport }).promise;
+
+  const visible = document.createElement('canvas');
+  visible.className = 'pdf-region-canvas';
+  const vctx = visible.getContext('2d');
+  if (region.crop) {
+    const sx = region.crop.x * off.width;
+    const sy = region.crop.y * off.height;
+    const sw = region.crop.w * off.width;
+    const sh = region.crop.h * off.height;
+    visible.width = Math.round(sw);
+    visible.height = Math.round(sh);
+    visible.style.width = `${sw / dpr}px`;
+    visible.style.height = `${sh / dpr}px`;
+    vctx.drawImage(off, sx, sy, sw, sh, 0, 0, visible.width, visible.height);
+  } else {
+    visible.width = off.width;
+    visible.height = off.height;
+    visible.style.width = `${off.width / dpr}px`;
+    visible.style.height = `${off.height / dpr}px`;
+    vctx.drawImage(off, 0, 0);
+  }
+  return visible;
+}
+
 async function renderPdfCard(item) {
   els.pdfLoading.hidden = false;
   try {
     const pdf = await getPdf(item.docId);
-    const page = await pdf.getPage(item.page);
     const containerWidth = Math.max(els.pdfScroll.clientWidth - 24, 200);
-    const base = page.getViewport({ scale: 1 });
-    const fitScale = containerWidth / base.width;
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-    const renderScale = fitScale * state.zoom * dpr;
-    const viewport = page.getViewport({ scale: renderScale });
+    const regions = item.regions && item.regions.length ? item.regions : [{ page: item.page, crop: item.crop || null }];
 
-    const off = document.createElement('canvas');
-    off.width = Math.round(viewport.width);
-    off.height = Math.round(viewport.height);
-    await page.render({ canvasContext: off.getContext('2d'), viewport }).promise;
+    const canvases = [];
+    for (const region of regions) canvases.push(await renderPageRegion(pdf, region, containerWidth, dpr));
 
-    const visible = els.pdfCanvas;
-    const vctx = visible.getContext('2d');
-    if (item.crop) {
-      const sx = item.crop.x * off.width;
-      const sy = item.crop.y * off.height;
-      const sw = item.crop.w * off.width;
-      const sh = item.crop.h * off.height;
-      visible.width = Math.round(sw);
-      visible.height = Math.round(sh);
-      visible.style.width = `${sw / dpr}px`;
-      visible.style.height = `${sh / dpr}px`;
-      vctx.clearRect(0, 0, visible.width, visible.height);
-      vctx.drawImage(off, sx, sy, sw, sh, 0, 0, visible.width, visible.height);
-    } else {
-      visible.width = off.width;
-      visible.height = off.height;
-      visible.style.width = `${off.width / dpr}px`;
-      visible.style.height = `${off.height / dpr}px`;
-      vctx.clearRect(0, 0, visible.width, visible.height);
-      vctx.drawImage(off, 0, 0);
-    }
+    els.pdfCanvasStack.innerHTML = '';
+    for (const c of canvases) els.pdfCanvasStack.appendChild(c);
   } catch (err) {
     console.error(err);
     showBanner('שגיאה בהצגת העמוד');
@@ -488,6 +519,43 @@ function moveCard(delta) {
   renderCurrentCard();
 }
 
+async function applyManifestToDoc(doc, data) {
+  let imported = 0;
+  for (const q of data.questions) {
+    if (!q.id || !(q.page || (q.regions && q.regions.length))) continue;
+    const topicIds = [];
+    for (const name of (q.topics || [])) {
+      const t = await findOrCreateTopicByName(name);
+      if (t) topicIds.push(t.id);
+    }
+    const defaults = {
+      page: q.regions ? q.regions[0].page : q.page,
+      crop: q.regions ? null : (q.crop || null),
+      regions: q.regions || null,
+      label: q.label || null,
+    };
+    const card = await getCardOrDefault(doc.id, String(q.id), defaults);
+    card.page = defaults.page;
+    card.crop = defaults.crop;
+    card.regions = defaults.regions;
+    card.label = defaults.label;
+    card.topics = Array.from(new Set([...card.topics, ...topicIds]));
+    const existingStepTexts = new Set(card.steps.map((s) => s.text));
+    for (const stepText of (q.steps || [])) {
+      if (!existingStepTexts.has(stepText)) {
+        card.steps.push({ id: uid(), text: stepText, done: false });
+      }
+    }
+    await saveCard(card);
+    imported++;
+  }
+  doc.manifest = data;
+  doc.totalCards = data.questions.length;
+  await dbPut('documents', doc);
+  await refreshTopicsCache();
+  return imported;
+}
+
 async function handleManifestImport(e) {
   const file = e.target.files[0];
   e.target.value = '';
@@ -498,34 +566,7 @@ async function handleManifestImport(e) {
     if (!data || !Array.isArray(data.questions)) throw new Error('bad schema');
 
     const doc = await getDoc(state.activeDocId);
-    let imported = 0;
-    for (const q of data.questions) {
-      if (!q.id || !q.page) continue;
-      const topicIds = [];
-      for (const name of (q.topics || [])) {
-        const t = await findOrCreateTopicByName(name);
-        if (t) topicIds.push(t.id);
-      }
-      const card = await getCardOrDefault(doc.id, String(q.id), {
-        page: q.page, crop: q.crop || null, label: q.label || null,
-      });
-      card.page = q.page;
-      card.crop = q.crop || null;
-      card.label = q.label || null;
-      card.topics = Array.from(new Set([...card.topics, ...topicIds]));
-      const existingStepTexts = new Set(card.steps.map((s) => s.text));
-      for (const stepText of (q.steps || [])) {
-        if (!existingStepTexts.has(stepText)) {
-          card.steps.push({ id: uid(), text: stepText, done: false });
-        }
-      }
-      await saveCard(card);
-      imported++;
-    }
-    doc.manifest = data;
-    doc.totalCards = data.questions.length;
-    await dbPut('documents', doc);
-    await refreshTopicsCache();
+    const imported = await applyManifestToDoc(doc, data);
 
     state.cardList = docCardList(doc);
     state.cardIndex = 0;
@@ -534,6 +575,115 @@ async function handleManifestImport(e) {
   } catch (err) {
     console.error(err);
     showBanner('שגיאה בקריאת קובץ הפירוק. ודאו שזהו JSON תקין במבנה הנכון.');
+  }
+}
+
+// ---------- Automatic splitting ----------
+// Detects "Problem N. (Title)" / "Solution N." style headings in the PDF's text
+// layer and groups everything between one heading and the next (possibly
+// spanning a page break) into a single question card.
+
+async function extractLines(pdf, pageNum) {
+  const page = await pdf.getPage(pageNum);
+  const viewport = page.getViewport({ scale: 1 });
+  const content = await page.getTextContent();
+  const lines = new Map();
+  for (const item of content.items) {
+    if (!item.str || !item.str.trim()) continue;
+    const [vx, vy] = viewport.convertToViewportPoint(item.transform[4], item.transform[5]);
+    const endX = vx + (item.width || 0);
+    const key = Math.round(vy / 2) * 2;
+    if (!lines.has(key)) lines.set(key, { y: vy, parts: [] });
+    lines.get(key).parts.push({ x: vx, endX, str: item.str });
+  }
+  return [...lines.values()]
+    .sort((a, b) => a.y - b.y)
+    .map((l) => {
+      const parts = l.parts.sort((a, b) => a.x - b.x);
+      let text = '';
+      let prevEndX = null;
+      for (const p of parts) {
+        if (prevEndX !== null && p.x - prevEndX > 1.5 && !/\s$/.test(text) && !/^\s/.test(p.str)) text += ' ';
+        text += p.str;
+        prevEndX = p.endX;
+      }
+      return { yFrac: l.y / viewport.height, text };
+    });
+}
+
+function suggestTopicsForText(text) {
+  const found = new Set();
+  for (const kw of TOPIC_KEYWORDS) if (kw.match.test(text)) found.add(kw.topic);
+  return [...found];
+}
+
+async function autoSplitDocument(docId) {
+  const pdf = await getPdf(docId);
+  const headings = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const lines = await extractLines(pdf, p);
+    for (const line of lines) {
+      const m = line.text.match(HEADING_RE);
+      if (!m) continue;
+      let title = (m[2] || '').trim();
+      if (!title) title = line.text.slice(m[0].length).replace(/^[\s.:\-]+/, '').trim();
+      headings.push({ page: p, yFrac: line.yFrac, num: m[1], title });
+    }
+  }
+  if (!headings.length) return { version: 2, questions: [] };
+
+  const PAD = 0.006;
+  const questions = [];
+  for (let i = 0; i < headings.length; i++) {
+    const h = headings[i];
+    const next = headings[i + 1];
+    const start = Math.max(0, h.yFrac - PAD);
+    const regions = [];
+
+    if (next && next.page === h.page) {
+      regions.push({ page: h.page, crop: { x: 0, y: start, w: 1, h: Math.max(0.02, next.yFrac - start) } });
+    } else {
+      regions.push({ page: h.page, crop: { x: 0, y: start, w: 1, h: 1 - start } });
+      const endPage = next ? next.page : pdf.numPages;
+      for (let p = h.page + 1; p < endPage; p++) regions.push({ page: p, crop: null });
+      if (next) {
+        regions.push({ page: next.page, crop: { x: 0, y: 0, w: 1, h: Math.max(0.02, next.yFrac - PAD) } });
+      } else if (endPage > h.page) {
+        regions.push({ page: endPage, crop: null });
+      }
+    }
+
+    questions.push({
+      id: `auto-p${h.num}`,
+      label: `שאלה ${h.num}${h.title ? ' · ' + h.title : ''}`,
+      regions,
+      topics: suggestTopicsForText(h.title),
+    });
+  }
+  return { version: 2, questions };
+}
+
+async function handleAutoSplit() {
+  if (!state.activeDocId) return;
+  showBanner('מנתח את ה-PDF…', 60000);
+  try {
+    const data = await autoSplitDocument(state.activeDocId);
+    if (!data.questions.length) {
+      els.banner.hidden = true;
+      showBanner('לא זוהו כותרות שאלה (כמו "Problem 1.") בקובץ. אם זהו PDF סרוק כתמונה, אין בו שכבת טקסט לניתוח — אפשר לייבא פירוק ידני (JSON) במקום.', 6000);
+      return;
+    }
+    const doc = await getDoc(state.activeDocId);
+    const imported = await applyManifestToDoc(doc, data);
+    state.cardList = docCardList(doc);
+    state.cardIndex = 0;
+    renderCurrentCard();
+    els.banner.hidden = true;
+    showBanner(`זוהו ${imported} שאלות אוטומטית. נושאים מוצעים - כדאי לבדוק ולתקן ידנית.`, 5000);
+  } catch (err) {
+    console.error(err);
+    els.banner.hidden = true;
+    showBanner('שגיאה בניתוח האוטומטי של ה-PDF.');
   }
 }
 
@@ -600,7 +750,7 @@ function enterTopicMode(topic, cards) {
   state.mode = 'topic';
   state.topicFilterId = topic.id;
   state.topicFilterName = topic.name;
-  state.cardList = cards.map((c) => ({ docId: c.docId, cardId: c.cardId, page: c.page, crop: c.crop, label: c.label }));
+  state.cardList = cards.map((c) => ({ docId: c.docId, cardId: c.cardId, page: c.page, crop: c.crop, regions: c.regions, label: c.label }));
   state.cardIndex = 0;
   state.zoom = 1;
   switchTab('cards');
@@ -636,8 +786,10 @@ function switchTab(tab) {
 
 async function renderCardsScreen() {
   els.btnClearTopicFilter.hidden = state.mode !== 'topic';
+  const docToolsHidden = state.mode !== 'doc' || !state.activeDocId;
   const manifestLabel = els.inputManifest.closest('label');
-  if (manifestLabel) manifestLabel.hidden = state.mode !== 'doc' || !state.activeDocId;
+  if (manifestLabel) manifestLabel.hidden = docToolsHidden;
+  els.btnAutoSplit.hidden = docToolsHidden;
 
   if (state.mode === 'topic') {
     els.appbarSubtitle.hidden = false;
@@ -719,14 +871,7 @@ function wireEvents() {
     }, 400);
   });
 
-  els.btnAutoSplitInfo.addEventListener('click', () => {
-    alert(
-      'פירוק אוטומטי (בקרוב):\n\n' +
-      'בשלב הבא, אפשר יהיה לבקש מקלוד לנתח את קובץ ה-PDF ולייצר קובץ JSON שמפרק כל עמוד לשאלות נפרדות עם נושאים ושלבי פתרון מוצעים. ' +
-      'את הקובץ הזה מייבאים כאן דרך "ייבוא פירוק JSON".\n\n' +
-      'בינתיים אפשר לפרק כל שאלה ידנית בעזרת "הוסיפו שלב" למטה.'
-    );
-  });
+  els.btnAutoSplit.addEventListener('click', handleAutoSplit);
 
   els.formAddTopic.addEventListener('submit', async (e) => {
     e.preventDefault();
