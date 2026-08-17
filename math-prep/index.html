@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icon.svg" />
-  <link rel="stylesheet" href="assets/style.css?v=1" />
+  <link rel="stylesheet" href="assets/style.css?v=2" />
 </head>
 <body>
   <div id="app" class="app">
@@ -49,8 +49,9 @@
             <span id="card-position" class="card-position"></span>
             <div class="cards-toolbar-actions">
               <button id="btn-clear-topic-filter" class="chip chip-clear" type="button" hidden>נקה סינון נושא ✕</button>
+              <button id="btn-auto-split" class="btn btn-outline btn-sm" type="button">פרק אוטומטית 🪄</button>
               <label class="btn btn-outline btn-sm btn-file">
-                ייבוא פירוק JSON
+                ייבוא JSON
                 <input id="input-manifest" type="file" accept="application/json,.json" hidden />
               </label>
             </div>
@@ -62,7 +63,7 @@
               <button id="btn-zoom-in" class="icon-btn icon-btn-sm" type="button" aria-label="הגדל">＋</button>
             </div>
             <div id="pdf-scroll" class="pdf-scroll">
-              <canvas id="pdf-canvas"></canvas>
+              <div id="pdf-canvas-stack" class="pdf-canvas-stack"></div>
               <div id="pdf-loading" class="pdf-loading" hidden>טוען עמוד…</div>
             </div>
           </div>
@@ -95,10 +96,7 @@
           </details>
 
           <details class="panel">
-            <summary>
-              שלבי פתרון
-              <button id="btn-auto-split-info" class="badge-btn" type="button">בקרוב: פירוק אוטומטי ℹ️</button>
-            </summary>
+            <summary>שלבי פתרון</summary>
             <ul id="steps-list" class="steps-list"></ul>
             <form id="form-add-step" class="inline-add-form">
               <input id="input-new-step" type="text" placeholder="הוסיפו שלב…" maxlength="200" />
@@ -140,6 +138,6 @@
 
   </div>
 
-  <script type="module" src="assets/app.js?v=1"></script>
+  <script type="module" src="assets/app.js?v=2"></script>
 </body>
 </html>
