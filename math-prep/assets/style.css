@@ -33,6 +33,11 @@
 
 * { box-sizing: border-box; }
 
+/* Elements that set their own `display` (flex/grid/etc.) would otherwise
+   silently defeat the `hidden` attribute, since author-origin display rules
+   beat the user-agent [hidden]{display:none} rule regardless of specificity. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -73,7 +78,7 @@ html, body {
 .screens {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 16px calc(90px + env(safe-area-inset-bottom, 0));
+  padding: 16px 16px calc(110px + env(safe-area-inset-bottom, 0));
 }
 
 .screen[hidden] { display: none; }
@@ -138,8 +143,7 @@ html, body {
 .empty-state { color: var(--text-muted); text-align: center; padding: 40px 12px; font-size: 0.95rem; }
 
 .cards-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.card-position { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
-.cards-toolbar-actions { display: flex; gap: 8px; align-items: center; }
+.card-position { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; direction: ltr; unicode-bidi: isolate; }
 
 .chip {
   display: inline-flex;
@@ -174,6 +178,7 @@ html, body {
   padding: 10px;
   touch-action: pan-x pan-y;
 }
+.pdf-frame-question .pdf-scroll { max-height: 66vh; min-height: 120px; }
 .pdf-canvas-stack {
   display: flex;
   flex-direction: column;
@@ -236,7 +241,45 @@ html, body {
 }
 .panel summary::-webkit-details-marker { display: none; }
 
+.panel-plain {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  margin-top: 12px;
+}
+.section-label { margin: 0 0 10px; font-weight: 700; font-size: 0.9rem; }
+.section-label-hint { font-weight: 400; color: var(--text-muted); font-size: 0.78rem; }
+
+.topic-chip-bar { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
 .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.chip-row-compact { flex: 1; gap: 6px; margin-bottom: 0; }
+.chip-row-compact .chip { padding: 5px 10px; font-size: 0.76rem; }
+
+.inline-add-form-sm { display: flex; flex-shrink: 0; }
+.inline-add-form-sm input {
+  width: 110px;
+  padding: 6px 10px;
+  border-radius: 10px 0 0 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 0.78rem;
+}
+.inline-add-form-sm .icon-btn-sm { border-radius: 0 10px 10px 0; border-inline-start: none; }
+
+.btn-solution-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1.02rem;
+  margin-bottom: 12px;
+}
+.solution-toggle-icon { font-size: 1.2rem; }
+.btn-solution-toggle.is-open { background: var(--surface-alt); color: var(--text); border: 1.5px solid var(--border); }
+
+.solution-panel { margin-bottom: 12px; }
 
 .inline-add-form { display: flex; gap: 8px; }
 .inline-add-form input {

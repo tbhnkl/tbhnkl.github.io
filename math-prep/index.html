@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icon.svg" />
-  <link rel="stylesheet" href="assets/style.css?v=2" />
+  <link rel="stylesheet" href="assets/style.css?v=3" />
 </head>
 <body>
   <div id="app" class="app">
@@ -47,17 +47,10 @@
         <div id="cards-content" class="cards-content" hidden>
           <div class="cards-toolbar">
             <span id="card-position" class="card-position"></span>
-            <div class="cards-toolbar-actions">
-              <button id="btn-clear-topic-filter" class="chip chip-clear" type="button" hidden>נקה סינון נושא ✕</button>
-              <button id="btn-auto-split" class="btn btn-outline btn-sm" type="button">פרק אוטומטית 🪄</button>
-              <label class="btn btn-outline btn-sm btn-file">
-                ייבוא JSON
-                <input id="input-manifest" type="file" accept="application/json,.json" hidden />
-              </label>
-            </div>
+            <button id="btn-clear-topic-filter" class="chip chip-clear" type="button" hidden>נקה סינון נושא ✕</button>
           </div>
 
-          <div class="pdf-frame">
+          <div class="pdf-frame pdf-frame-question">
             <div class="pdf-zoom-controls">
               <button id="btn-zoom-out" class="icon-btn icon-btn-sm" type="button" aria-label="הקטן">－</button>
               <button id="btn-zoom-in" class="icon-btn icon-btn-sm" type="button" aria-label="הגדל">＋</button>
@@ -86,23 +79,37 @@
             </button>
           </div>
 
-          <details class="panel" open>
-            <summary>נושאים</summary>
-            <div id="card-topic-chips" class="chip-row"></div>
-            <form id="form-add-topic-inline" class="inline-add-form">
+          <div class="topic-chip-bar">
+            <div id="card-topic-chips" class="chip-row chip-row-compact"></div>
+            <form id="form-add-topic-inline" class="inline-add-form-sm">
               <input id="input-new-topic-inline" type="text" placeholder="נושא חדש…" maxlength="60" />
-              <button type="submit" class="btn btn-outline btn-sm">הוסף</button>
+              <button type="submit" class="icon-btn icon-btn-sm" aria-label="הוסף נושא">＋</button>
             </form>
-          </details>
+          </div>
 
-          <details class="panel">
-            <summary>שלבי פתרון</summary>
-            <ul id="steps-list" class="steps-list"></ul>
-            <form id="form-add-step" class="inline-add-form">
-              <input id="input-new-step" type="text" placeholder="הוסיפו שלב…" maxlength="200" />
-              <button type="submit" class="btn btn-outline btn-sm">הוסף</button>
-            </form>
-          </details>
+          <button id="btn-toggle-solution" class="btn btn-primary btn-solution-toggle" type="button">
+            <span id="solution-toggle-icon" class="solution-toggle-icon">📖</span>
+            <span id="solution-toggle-label">הצג פתרון</span>
+          </button>
+
+          <div id="solution-panel" class="solution-panel" hidden>
+            <div class="pdf-frame">
+              <div id="solution-scroll" class="pdf-scroll">
+                <div id="solution-canvas-stack" class="pdf-canvas-stack"></div>
+                <div id="solution-loading" class="pdf-loading" hidden>טוען פתרון…</div>
+              </div>
+            </div>
+            <p id="solution-missing" class="hint" hidden>לא זוהה פתרון נפרד עבור השאלה הזו בקובץ — אפשר עדיין להוסיף שלבי פתרון ידנית למטה.</p>
+
+            <div class="panel-plain">
+              <p class="section-label">שלבי פתרון <span class="section-label-hint">(ניתן לעריכה)</span></p>
+              <ul id="steps-list" class="steps-list"></ul>
+              <form id="form-add-step" class="inline-add-form">
+                <input id="input-new-step" type="text" placeholder="הוסיפו שלב…" maxlength="200" />
+                <button type="submit" class="btn btn-outline btn-sm">הוסף</button>
+              </form>
+            </div>
+          </div>
 
           <details class="panel">
             <summary>הערות</summary>
@@ -138,6 +145,6 @@
 
   </div>
 
-  <script type="module" src="assets/app.js?v=2"></script>
+  <script type="module" src="assets/app.js?v=3"></script>
 </body>
 </html>
