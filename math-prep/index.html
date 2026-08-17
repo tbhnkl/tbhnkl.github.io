@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>הכנה למבחן מתמטיקה</title>
+  <meta name="description" content="תרגול אישי למבחן מתמטיקה - כרטיסיות שאלות לפי נושא" />
+  <meta name="theme-color" content="#1A73E8" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <link rel="stylesheet" href="assets/style.css?v=1" />
+</head>
+<body>
+  <div id="app" class="app">
+
+    <header class="appbar">
+      <h1 id="appbar-title" class="appbar-title">הכנה למבחן</h1>
+      <p id="appbar-subtitle" class="appbar-subtitle" hidden></p>
+    </header>
+
+    <div id="banner" class="banner" hidden role="alert"></div>
+
+    <main class="screens">
+
+      <!-- DOCUMENTS -->
+      <section id="screen-documents" class="screen">
+        <label class="btn btn-primary btn-file">
+          + הוסף PDF חדש
+          <input id="input-pdf" type="file" accept="application/pdf,.pdf" hidden />
+        </label>
+        <p class="hint">הקובץ נטען ונשמר רק בדפדפן שלך במכשיר הזה. שום דבר לא נשלח לשרת.</p>
+
+        <div id="doc-list" class="doc-list"></div>
+        <p id="doc-empty" class="empty-state" hidden>עדיין לא הוספת מבחנים. הוסיפו קובץ PDF כדי להתחיל.</p>
+      </section>
+
+      <!-- CARDS -->
+      <section id="screen-cards" class="screen" hidden>
+        <div id="cards-empty" class="empty-state" hidden>
+          <p>לא נבחר מסמך. עברו לטאב "מסמכים" ופתחו מבחן.</p>
+        </div>
+
+        <div id="cards-content" class="cards-content" hidden>
+          <div class="cards-toolbar">
+            <span id="card-position" class="card-position"></span>
+            <div class="cards-toolbar-actions">
+              <button id="btn-clear-topic-filter" class="chip chip-clear" type="button" hidden>נקה סינון נושא ✕</button>
+              <label class="btn btn-outline btn-sm btn-file">
+                ייבוא פירוק JSON
+                <input id="input-manifest" type="file" accept="application/json,.json" hidden />
+              </label>
+            </div>
+          </div>
+
+          <div class="pdf-frame">
+            <div class="pdf-zoom-controls">
+              <button id="btn-zoom-out" class="icon-btn icon-btn-sm" type="button" aria-label="הקטן">－</button>
+              <button id="btn-zoom-in" class="icon-btn icon-btn-sm" type="button" aria-label="הגדל">＋</button>
+            </div>
+            <div id="pdf-scroll" class="pdf-scroll">
+              <canvas id="pdf-canvas"></canvas>
+              <div id="pdf-loading" class="pdf-loading" hidden>טוען עמוד…</div>
+            </div>
+          </div>
+
+          <div class="nav-row">
+            <button id="btn-prev" class="icon-btn icon-btn-lg" type="button" aria-label="הקודם">›</button>
+            <span id="card-label" class="card-label"></span>
+            <button id="btn-next" class="icon-btn icon-btn-lg" type="button" aria-label="הבא">‹</button>
+          </div>
+
+          <div class="status-row" id="status-row">
+            <button class="status-btn status-known" data-status="known" type="button">
+              <span class="status-emoji">🙂</span>יודע
+            </button>
+            <button class="status-btn status-partial" data-status="partial" type="button">
+              <span class="status-emoji">😐</span>חלקית
+            </button>
+            <button class="status-btn status-unknown" data-status="unknown" type="button">
+              <span class="status-emoji">😕</span>לא יודע
+            </button>
+          </div>
+
+          <details class="panel" open>
+            <summary>נושאים</summary>
+            <div id="card-topic-chips" class="chip-row"></div>
+            <form id="form-add-topic-inline" class="inline-add-form">
+              <input id="input-new-topic-inline" type="text" placeholder="נושא חדש…" maxlength="60" />
+              <button type="submit" class="btn btn-outline btn-sm">הוסף</button>
+            </form>
+          </details>
+
+          <details class="panel">
+            <summary>
+              שלבי פתרון
+              <button id="btn-auto-split-info" class="badge-btn" type="button">בקרוב: פירוק אוטומטי ℹ️</button>
+            </summary>
+            <ul id="steps-list" class="steps-list"></ul>
+            <form id="form-add-step" class="inline-add-form">
+              <input id="input-new-step" type="text" placeholder="הוסיפו שלב…" maxlength="200" />
+              <button type="submit" class="btn btn-outline btn-sm">הוסף</button>
+            </form>
+          </details>
+
+          <details class="panel">
+            <summary>הערות</summary>
+            <textarea id="card-notes" class="notes-area" placeholder="הערות אישיות לשאלה הזו…" rows="3"></textarea>
+          </details>
+        </div>
+      </section>
+
+      <!-- TOPICS -->
+      <section id="screen-topics" class="screen" hidden>
+        <p id="topics-summary" class="topics-summary"></p>
+        <form id="form-add-topic" class="inline-add-form">
+          <input id="input-new-topic" type="text" placeholder="הוסיפו נושא חדש…" maxlength="60" />
+          <button type="submit" class="btn btn-primary btn-sm">הוסף</button>
+        </form>
+        <div id="topic-list" class="topic-list"></div>
+        <p id="topics-empty" class="empty-state" hidden>אין עדיין נושאים. הוסיפו נושא ראשון למעלה.</p>
+      </section>
+
+    </main>
+
+    <nav id="tabbar" class="tabbar">
+      <button class="tab-btn is-active" data-tab="documents" type="button">
+        <span class="tab-icon">📄</span>מסמכים
+      </button>
+      <button class="tab-btn" data-tab="cards" type="button">
+        <span class="tab-icon">🗂️</span>כרטיסיות
+      </button>
+      <button class="tab-btn" data-tab="topics" type="button">
+        <span class="tab-icon">🏷️</span>נושאים
+      </button>
+    </nav>
+
+  </div>
+
+  <script type="module" src="assets/app.js?v=1"></script>
+</body>
+</html>

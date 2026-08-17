@@ -55,3 +55,11 @@ site. To try it locally:
 python3 -m http.server 8000
 # open http://localhost:8000
 ```
+
+## Other apps on this site
+
+- **[הכנה למבחן מתמטיקה](math-prep/)** (`/math-prep/`) — a personal,
+  mobile-friendly exam-prep app. Loads a PDF entirely client-side (nothing
+  uploaded anywhere, for copyright reasons), shows it as swipeable question
+  cards, and tracks "know it / don't know it" progress per topic (e.g.
+  convexity, linear programming) across exams. See `math-prep/README.md`.
