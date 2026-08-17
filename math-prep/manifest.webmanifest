@@ -1,0 +1,21 @@
+{
+  "name": "הכנה למבחן מתמטיקה",
+  "short_name": "הכנה למבחן",
+  "description": "תרגול אישי למבחן מתמטיקה - כרטיסיות שאלות לפי נושא",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1117",
+  "theme_color": "#1A73E8",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
