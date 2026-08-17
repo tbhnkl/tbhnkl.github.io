@@ -3,8 +3,9 @@ import * as pdfjsLib from './vendor/pdfjs/pdf.min.js';
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdfjs/pdf.worker.min.js', import.meta.url).href;
 
 const DEFAULT_TOPICS = [
-  'קמירות', 'תכנון לינארי', 'נגזרות', 'אינטגרלים',
-  'גבולות ורציפות', 'מטריצות ואלגברה לינארית', 'טורים', 'הסתברות וסטטיסטיקה',
+  'גבולות ורציפות', 'נגזרות', 'קמירות', 'אופטימיזציה קמורה וגרדיאנט',
+  'KKT ולגראנז\'', 'תכנון לינארי ודואליות', 'אלגברה לינארית ומטריצות',
+  'תורת גרפים ספקטרלית', 'הסתברות ותוחלת', 'שיטות הסתברותיות וריכוז',
 ];
 
 const LAST_DOC_KEY = 'mathPrep.lastDocId';
@@ -15,13 +16,15 @@ const HEADING_RE = /^\s*(?:Problem|Exercise|Question|שאלה|תרגיל)\s*\.?\
 // Best-effort topic suggestions from a question's heading text. Always editable afterwards.
 const TOPIC_KEYWORDS = [
   { match: /lipschitz|continuit|continuous|open and closed|preimage/i, topic: 'גבולות ורציפות' },
-  { match: /convex|epigraph|sub-?gradient|unit ball|\bnorm\b|hyperplane/i, topic: 'קמירות' },
   { match: /derivative|differentiab|taylor|jacobian|negligible/i, topic: 'נגזרות' },
-  { match: /linear programming|simplex method|\blp\b/i, topic: 'תכנון לינארי' },
-  { match: /matrix|matrices|eigen|determinant/i, topic: 'מטריצות ואלגברה לינארית' },
-  { match: /\bintegral|integration/i, topic: 'אינטגרלים' },
-  { match: /\bseries\b|\bsequence\b/i, topic: 'טורים' },
-  { match: /probability|random variable|expectation|variance/i, topic: 'הסתברות וסטטיסטיקה' },
+  { match: /convex|epigraph|sub-?gradient|unit ball|\bnorm\b|hyperplane/i, topic: 'קמירות' },
+  { match: /smooth|strongly convex|gradient descent|\bgd\b/i, topic: 'אופטימיזציה קמורה וגרדיאנט' },
+  { match: /\bkkt\b|lagrang|karush/i, topic: 'KKT ולגראנז\'' },
+  { match: /linear programming|simplex|\blp\b|duality|dual|polyhedra|farkas|max-?flow|min-?cut|shortest path/i, topic: 'תכנון לינארי ודואליות' },
+  { match: /matrix|matrices|eigen|determinant|\bsvd\b|recurrence/i, topic: 'אלגברה לינארית ומטריצות' },
+  { match: /\bgraph\b|spectrum|spectral|biclique|hoffman|regular graph/i, topic: 'תורת גרפים ספקטרלית' },
+  { match: /probability|random variable|expectation|variance|independen/i, topic: 'הסתברות ותוחלת' },
+  { match: /concentration|moment method|markov|chebyshev|hoeffding|probabilistic method|random graph|random subset|hypercube/i, topic: 'שיטות הסתברותיות וריכוז' },
 ];
 
 // ---------- IndexedDB ----------
@@ -299,6 +302,44 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// ---------- Bundled enrichment (pre-authored topics + solution steps) ----------
+// For PDFs that match a bundled manifest (shipped in math-prep/manifests/), we
+// auto-split the document and overlay pre-authored topics/steps automatically -
+// no manual "ייבוא JSON" needed. See math-prep/manifests/README.md.
+
+function extractHomeworkNumber(docName) {
+  const norm = docName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const m = norm.match(/ex(\d{1,2})sol/) || norm.match(/homework(\d{1,2})/) || norm.match(/hw(\d{1,2})/) || norm.match(/ex(\d{1,2})/);
+  return m ? m[1] : null;
+}
+
+async function fetchBundledEnrichment(docName) {
+  const num = extractHomeworkNumber(docName);
+  if (!num) return null;
+  try {
+    const res = await fetch(new URL(`../manifests/mtcs-hw${num}.json`, import.meta.url));
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function tryAutoEnrich(doc) {
+  const bundle = await fetchBundledEnrichment(doc.name);
+  if (!bundle || !bundle.questions) return 0;
+  const splitData = await autoSplitDocument(doc.id);
+  if (!splitData.questions.length) return 0;
+  for (const q of splitData.questions) {
+    const num = q.id.replace('auto-p', '');
+    const enrich = bundle.questions[num];
+    if (!enrich) continue;
+    if (enrich.topics) q.topics = enrich.topics;
+    if (enrich.steps) q.steps = enrich.steps;
+  }
+  return applyManifestToDoc(doc, splitData);
+}
+
 async function handlePdfInput(e) {
   const file = e.target.files[0];
   e.target.value = '';
@@ -324,7 +365,13 @@ async function handlePdfInput(e) {
     await dbPut('documents', doc);
     state.pdfDocs.set(doc.id, pdf);
     els.banner.hidden = true;
-    showBanner(`נוסף "${doc.name}" (${pdf.numPages} עמודים)`);
+
+    const enrichedCount = await tryAutoEnrich(doc);
+    if (enrichedCount) {
+      showBanner(`נוסף "${doc.name}" - זוהו ופורקו ${enrichedCount} שאלות עם נושאים ושלבי פתרון מוכנים`, 5000);
+    } else {
+      showBanner(`נוסף "${doc.name}" (${pdf.numPages} עמודים)`);
+    }
     await renderDocList();
     openDocument(doc.id);
   } catch (err) {
